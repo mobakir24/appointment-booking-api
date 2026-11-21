@@ -1,0 +1,35 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum BookingStatus {
+  active
+  cancelled
+}
+
+model Slot {
+  id       String    @id @db.Uuid
+  startsAt DateTime  @db.Timestamptz(3)
+  endsAt   DateTime  @db.Timestamptz(3)
+  bookings Booking[]
+}
+
+// ملاحظة: القيد الفريد الجزئي (حجز نشط واحد لكل موعد) لا يمكن التعبير عنه في Prisma schema،
+// لذلك يُنشأ في ملف الترحيل SQL مباشرة. راجع README.
+model Booking {
+  id            String        @id @default(uuid()) @db.Uuid
+  slotId        String        @db.Uuid
+  customerName  String
+  customerEmail String
+  status        BookingStatus @default(active)
+  createdAt     DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime      @updatedAt @db.Timestamptz(3)
+  slot          Slot          @relation(fields: [slotId], references: [id])
+
+  @@index([slotId])
+}
